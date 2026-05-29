@@ -13,6 +13,7 @@ export interface Article {
 
 export interface BriefingResult {
   briefing: string
+  emailIntro: string
   pdfPath: string
 }
 
@@ -128,12 +129,40 @@ Use **double asterisks** around punchlines or key phrases for emphasis. Make it 
   return text
 }
 
+export async function generateEmailIntro(topic: string, articles: Article[]): Promise<string> {
+  const headlines = articles.map((a) => `- ${a.title}`).join("\n")
+
+  const { text } = await generateText({
+    model: google("gemini-2.0-flash-001"),
+    system:
+      "You write short, witty email intros for a sarcastic daily news briefing. " +
+      "One or two sentences only. Casual tone — like texting a friend. " +
+      "Tease the mood of the day (chaos, slow news, something big brewing, nothing happened) " +
+      "without listing headlines or summarizing stories. " +
+      "Tell them the full roast is in the attached PDF. Vary your style every time.",
+    prompt: `Topic: ${topic}
+
+Headlines today (for vibe only — do NOT mention or repeat them):
+${headlines}
+
+Write the email body intro.`,
+  })
+
+  return text.trim()
+}
+
 export function stripMarkdownBold(text: string): string {
   return text.replace(/\*\*([^*]+)\*\*/g, "$1")
 }
 
+function composioUploadDir(): string {
+  const dir = path.join(os.homedir(), ".composio", "temp")
+  fs.mkdirSync(dir, { recursive: true })
+  return dir
+}
+
 export async function createBriefingPdf(briefing: string): Promise<string> {
-  const pdfPath = path.join(os.tmpdir(), `funny-news-${Date.now()}.pdf`)
+  const pdfPath = path.join(composioUploadDir(), `funny-news-${Date.now()}.pdf`)
   const doc = new PDFDocument({
     size: "A4",
     margins: { top: 60, bottom: 60, left: 60, right: 60 },
@@ -177,7 +206,8 @@ export async function generateFunnyNewsBriefing(options?: {
   }
 
   const briefing = await generateFunnyBriefing(topic, articles, tone)
+  const emailIntro = await generateEmailIntro(topic, articles)
   const pdfPath = await createBriefingPdf(briefing)
 
-  return { briefing, pdfPath }
+  return { briefing, emailIntro, pdfPath }
 }

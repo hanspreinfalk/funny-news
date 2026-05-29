@@ -29,13 +29,10 @@ async function main() {
 
   console.log(`\n  🔍 Generating funny news briefing...\n`)
 
-  const { briefing, pdfPath } = await generateFunnyNewsBriefing()
+  const { briefing, emailIntro, pdfPath } = await generateFunnyNewsBriefing()
 
   try {
-    const composio = new Composio({
-      apiKey,
-      dangerouslyAllowAutoUploadDownloadFiles: true,
-    })
+    const composio = new Composio({ apiKey })
 
     await ensureGmailConnected(composio)
 
@@ -47,16 +44,24 @@ async function main() {
 
     console.log(`  📧 Sending to ${RECIPIENT}...\n`)
 
+    const attachment = await composio.files.upload({
+      file: pdfPath,
+      toolSlug: "GMAIL_SEND_EMAIL",
+      toolkitSlug: "gmail",
+    })
+
     await composio.tools.execute("GMAIL_SEND_EMAIL", {
       userId: USER_ID,
+      dangerouslySkipVersionCheck: true,
       arguments: {
         recipient_email: RECIPIENT,
         subject: `The Tech Roast — ${date}`,
-        body: stripMarkdownBold(briefing),
-        attachment: pdfPath,
+        body: stripMarkdownBold(emailIntro),
+        attachment,
       },
     })
 
+    console.log(`Email intro:\n${emailIntro}\n`)
     console.log(briefing)
     console.log(`\n  ✅ Email sent to ${RECIPIENT}`)
   } finally {
