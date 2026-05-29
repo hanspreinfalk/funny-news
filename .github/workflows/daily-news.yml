@@ -2,8 +2,10 @@ name: Daily Funny News
 
 on:
   schedule:
-    # 9:00 AM Pacific — generates briefing and emails it via Composio/Gmail
-    - cron: "0 16 * * *"  # 9:00 AM PDT (UTC-7), use "0 17 * * *" in winter
+    # 9:00 AM PDT (UTC-7) | use "0 17 * * *" in winter (PST, UTC-8)
+    - cron: "0 16 * * *"
+    # 4:00 PM PDT (UTC-7) | use "0 0 * * *" in winter (PST, UTC-8)
+    - cron: "0 23 * * *"
   workflow_dispatch:
   repository_dispatch:
     types: [run-funny-news]
