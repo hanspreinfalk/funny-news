@@ -1,0 +1,34 @@
+name: Daily Funny News
+
+on:
+  schedule:
+    # 9:00 AM Pacific — generates briefing and emails it via Composio/Gmail
+    - cron: "0 9 * * *"
+      timezone: America/Los_Angeles
+  workflow_dispatch:
+  repository_dispatch:
+    types: [run-funny-news]
+
+jobs:
+  funny-news:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate briefing and send email
+        env:
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          COMPOSIO_API_KEY: ${{ secrets.COMPOSIO_API_KEY }}
+          COMPOSIO_USER_ID: ${{ secrets.COMPOSIO_USER_ID }}
+          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+        run: npm run tool tools/send_funny_news_email.ts

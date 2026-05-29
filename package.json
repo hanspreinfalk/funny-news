@@ -1,0 +1,25 @@
+{
+  "name": "first-workflow",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "tool": "npx tsx"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^3.0.80",
+    "@composio/core": "^0.10.0",
+    "@types/pdfkit": "^0.17.6",
+    "ai": "^6.0.193",
+    "dotenv": "^16.4.0",
+    "node-cron": "^4.2.1",
+    "pdfkit": "^0.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "@types/node-cron": "^3.0.11",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
