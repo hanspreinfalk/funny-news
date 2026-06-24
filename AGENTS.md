@@ -59,36 +59,12 @@ Workflows should evolve as you learn. When you find better methods, discover con
 **4. Keep `.env.example` in sync**
 Every project must have a `.env.example` at the repo root. When you add, rename, or remove an environment variable in code, update `.env.example` in the same change — placeholders only, never real secrets. If `.env.example` is missing, create it before finishing the task.
 
-## When AI Is Needed, Use the Vercel AI SDK
+**5. Keep `README.md` in sync**
+When you add workflows, tools, setup steps, env vars, or change how the project runs, update `README.md` in the same change so it stays accurate for someone opening the repo cold.
 
-If a tool needs LLM reasoning — summarization, classification, rewriting, analysis — use the **[Vercel AI SDK](https://sdk.vercel.ai/docs)** (`ai` + provider packages), not raw REST calls or ad-hoc fetch wrappers.
+## Vercel AI SDK
 
-**Stack in this repo:**
-- `ai` — core SDK (`generateText`, `generateObject`, etc.)
-- `@ai-sdk/google` — Gemini models via `google("model-id")`
-- API keys in `.env` (e.g. `GOOGLE_GENERATIVE_AI_API_KEY`)
-
-**Conventions:**
-- Put AI logic in `tools/lib/` (e.g. `tools/lib/github_ai_summary.ts`), called from the top-level tool script
-- Keep prompts and parsing in that module; the orchestrating tool stays thin
-- Prefer structured output (JSON schema / `generateObject`) when the result feeds downstream code
-- Make the model configurable via env (e.g. `GITHUB_ACTIVITY_AI_MODEL`) with a sensible default
-- Check with me before re-running tools that burn paid API credits
-
-**Example:**
-
-```typescript
-import { google } from "@ai-sdk/google"
-import { generateText } from "ai"
-
-const { text } = await generateText({
-  model: google("gemini-2.5-flash"),
-  system: "You are…",
-  prompt: userContent,
-})
-```
-
-Fetch and transform data deterministically first; call the model only on the prepared context.
+When a tool needs LLM reasoning, use the [Vercel AI SDK](https://sdk.vercel.ai/docs) (`ai` + a provider package such as `@ai-sdk/openai`, `@ai-sdk/anthropic`, or `@ai-sdk/google`), not raw API calls. Put AI logic in `tools/lib/`; keep entry scripts thin. Prefer `generateObject` when output feeds downstream code. Model and provider keys via `.env` (per-workflow model env vars with sensible defaults). Prepare data deterministically first; call the model last. Check before re-running paid API calls.
 
 ## The Self-Improvement Loop
 
