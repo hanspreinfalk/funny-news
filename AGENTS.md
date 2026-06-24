@@ -18,10 +18,28 @@ You're working inside the **WAT framework** (Workflows, Agents, Tools). This arc
 **Layer 3: Tools (The Execution)**
 - TypeScript scripts in `tools/` that do the actual work
 - API calls, data transformations, file operations, database queries
-- Credentials and API keys are stored in `.env`
+- Credentials and API keys are stored in `.env` (see `.env.example` for required variables)
 - These scripts are consistent, testable, and fast
 
 **Why this matters:** When AI tries to handle every step directly, accuracy drops fast. If each step is 90% accurate, you're down to 59% success after just five steps. By offloading execution to deterministic scripts, you stay focused on orchestration and decision-making where you excel.
+
+## Tools Must Be TypeScript
+
+All tools in `tools/` **must be written in TypeScript** (`.ts`). Do not create Python, Bash, Ruby, or other language scripts for workflow execution.
+
+**Why:**
+- One runtime (`tsx` / Node) for every tool — same dependencies, same `.env` loading, same error handling
+- Shared helpers live in `tools/lib/` and are importable across tools
+- TypeScript catches bad API shapes and refactors before runtime
+
+**Conventions:**
+- Entry-point scripts go in `tools/` (e.g. `tools/send_github_activity_email.ts`)
+- Reusable logic goes in `tools/lib/` (e.g. `tools/lib/github_activity.ts`)
+- Run with: `npm run tool tools/<script>.ts`
+- Use `import "dotenv/config"` at the top of entry-point scripts
+- Match existing patterns: ESM imports, `.js` extensions in relative import paths
+
+If you're tempted to write a one-off Python script or shell wrapper, write TypeScript instead.
 
 ## How to Operate
 
@@ -37,6 +55,40 @@ When you hit an error:
 
 **3. Keep workflows current**
 Workflows should evolve as you learn. When you find better methods, discover constraints, or encounter recurring issues, update the workflow. That said, don't create or overwrite workflows without asking unless I explicitly tell you to. These are your instructions and need to be preserved and refined, not tossed after one use.
+
+**4. Keep `.env.example` in sync**
+Every project must have a `.env.example` at the repo root. When you add, rename, or remove an environment variable in code, update `.env.example` in the same change — placeholders only, never real secrets. If `.env.example` is missing, create it before finishing the task.
+
+## When AI Is Needed, Use the Vercel AI SDK
+
+If a tool needs LLM reasoning — summarization, classification, rewriting, analysis — use the **[Vercel AI SDK](https://sdk.vercel.ai/docs)** (`ai` + provider packages), not raw REST calls or ad-hoc fetch wrappers.
+
+**Stack in this repo:**
+- `ai` — core SDK (`generateText`, `generateObject`, etc.)
+- `@ai-sdk/google` — Gemini models via `google("model-id")`
+- API keys in `.env` (e.g. `GOOGLE_GENERATIVE_AI_API_KEY`)
+
+**Conventions:**
+- Put AI logic in `tools/lib/` (e.g. `tools/lib/github_ai_summary.ts`), called from the top-level tool script
+- Keep prompts and parsing in that module; the orchestrating tool stays thin
+- Prefer structured output (JSON schema / `generateObject`) when the result feeds downstream code
+- Make the model configurable via env (e.g. `GITHUB_ACTIVITY_AI_MODEL`) with a sensible default
+- Check with me before re-running tools that burn paid API credits
+
+**Example:**
+
+```typescript
+import { google } from "@ai-sdk/google"
+import { generateText } from "ai"
+
+const { text } = await generateText({
+  model: google("gemini-2.5-flash"),
+  system: "You are…",
+  prompt: userContent,
+})
+```
+
+Fetch and transform data deterministically first; call the model only on the prepared context.
 
 ## The Self-Improvement Loop
 
@@ -60,7 +112,8 @@ This loop is how the framework improves over time.
 .tmp/            # Temporary files (scraped data, intermediate exports). Regenerated as needed.
 tools/           # TypeScript scripts for deterministic execution
 workflows/       # Markdown SOPs defining what to do and how
-.env             # API keys and environment variables (NEVER store secrets anywhere else)
+.env             # API keys and secrets (gitignored — copy from .env.example)
+.env.example     # Documented env var template (committed; placeholders only)
 credentials.json, token.json  # Google OAuth (gitignored)
 ```
 
