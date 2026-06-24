@@ -8,7 +8,7 @@ Send an email summary of recent GitHub activity to Hans. The summary is generate
 
 | Input | Source | Default |
 |-------|--------|---------|
-| Recipient | `GITHUB_ACTIVITY_RECIPIENT` in `.env` | `hans.preinfalk.davila@gmail.com` |
+| Recipient | `ACTIVITY_EMAIL_RECIPIENT` in `.env` | `hans.preinfalk.davila@gmail.com` |
 | Composio user | `COMPOSIO_USER_ID` in `.env` | `funny-news` |
 | Gemini API key | `GOOGLE_GENERATIVE_AI_API_KEY` in `.env` | required |
 | Activity window | `GITHUB_ACTIVITY_HOURS` in `.env` | `24` (hours) |
@@ -64,12 +64,19 @@ Email to `hans.preinfalk.davila@gmail.com` with:
 | Rate limits | Reduce `GITHUB_ACTIVITY_MAX_REPOS`; re-run after a few minutes |
 | Large diffs | Patches truncated per-file and total context capped before AI analysis |
 
-## Scheduling (optional)
+## GitHub Actions (manual trigger)
 
-To send daily, add a GitHub Actions workflow or cron job that runs:
+`.github/workflows/github-activity-email.yml` runs on **workflow_dispatch** only — there is no cron schedule. Trigger it from the Actions tab when you want an email sent. It executes:
 
 ```bash
 npm run tool tools/send_github_activity_email.ts
 ```
 
-Ensure `COMPOSIO_API_KEY`, `COMPOSIO_USER_ID`, `GOOGLE_GENERATIVE_AI_API_KEY`, and `GITHUB_ACTIVITY_RECIPIENT` are set as repository secrets.
+Ensure these repository secrets are set (via **Settings → Secrets and variables → Actions** or `gh secret set`):
+
+| Secret | Description |
+|--------|-------------|
+| `GOOGLE_GENERATIVE_AI_API_KEY` | Gemini API key |
+| `COMPOSIO_API_KEY` | Composio API key |
+| `COMPOSIO_USER_ID` | Composio user ID |
+| `ACTIVITY_EMAIL_RECIPIENT` | Email recipient |

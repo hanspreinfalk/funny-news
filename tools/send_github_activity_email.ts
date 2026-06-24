@@ -7,7 +7,7 @@ import {
 import { generateGitHubActivitySummary } from "./lib/github_activity.js"
 
 const RECIPIENT =
-  process.env.GITHUB_ACTIVITY_RECIPIENT ?? "hans.preinfalk.davila@gmail.com"
+  process.env.ACTIVITY_EMAIL_RECIPIENT ?? "hans.preinfalk.davila@gmail.com"
 
 async function main() {
   console.log(`\n  🔍 Fetching GitHub activity for user "${COMPOSIO_USER_ID}"...\n`)
