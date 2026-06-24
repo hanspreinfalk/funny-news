@@ -62,6 +62,11 @@ Every project must have a `.env.example` at the repo root. When you add, rename,
 **5. Keep `README.md` in sync**
 When you add workflows, tools, setup steps, env vars, or change how the project runs, update `README.md` in the same change so it stays accurate for someone opening the repo cold.
 
+**6. Add a GitHub Actions workflow for every new workflow**
+When you create a workflow in `workflows/`, add a matching GitHub Actions file in `.github/workflows/` in the same change. Every workflow action **must** include `workflow_dispatch` so it can be run manually from the Actions tab. The action should run the workflow's entry-point tool (e.g. `npm run tool tools/send_github_activity_email.ts`) and pass required env vars from repository secrets. Document the workflow file and required secrets in the workflow SOP and `README.md`. Do not use secret names starting with `GITHUB_` — GitHub rejects them.
+
+After adding or changing required env vars, **use the GitHub CLI (`gh`) to set the matching repository secrets** — do not leave secret setup as a manual step for the user unless they ask you not to. Read values from the local `.env` (never commit `.env`) and run `gh secret set <NAME> --body "<value>"` for each secret the action needs. Verify with `gh secret list`.
+
 ## Vercel AI SDK
 
 When a tool needs LLM reasoning, use the [Vercel AI SDK](https://sdk.vercel.ai/docs) (`ai` + a provider package such as `@ai-sdk/openai`, `@ai-sdk/anthropic`, or `@ai-sdk/google`), not raw API calls. Put AI logic in `tools/lib/`; keep entry scripts thin. Prefer `generateObject` when output feeds downstream code. Model and provider keys via `.env` (per-workflow model env vars with sensible defaults). Prepare data deterministically first; call the model last. Check before re-running paid API calls.
